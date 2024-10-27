@@ -9,9 +9,9 @@ struct Node {
     struct Node* next;
 };
 
-struct Graph {
+typedef struct Graph {
     struct Node* head[MAX];
-};
+}graph;
 
 struct Node* createNode(int dest) {
     struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
