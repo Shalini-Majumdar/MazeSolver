@@ -41,7 +41,253 @@ void enqueue(Queue* q, int value);
 int dequeue(Queue* q);
 bool isValidMazeRow(char* rowInput, int row, int cols);
 
+// Function to create a graph with given vertices
+Graph* createGraph(int vertices) {
+    Graph* graph = (Graph*) malloc(sizeof(Graph));
+    graph->numVertices = vertices;
+    graph->adjLists = (Node**) malloc(vertices * sizeof(Node*));
+
+    for (int i = 0; i < vertices; i++)
+        graph->adjLists[i] = NULL;
+
+    return graph;
+}
+
+// Function to add an edge to the graph (undirected)
+void addEdge(Graph* graph, int source, int destination) {
+    Node* newNode = createNode(destination);
+    newNode->next = graph->adjLists[source];
+    graph->adjLists[source] = newNode;
+
+    newNode = createNode(source);
+    newNode->next = graph->adjLists[destination];
+    graph->adjLists[destination] = newNode;
+}
+
+// Create a node
+Node* createNode(int vertex) {
+    Node* newNode = (Node*) malloc(sizeof(Node));
+    newNode->vertex = vertex;
+    newNode->next = NULL;
+    return newNode;
+}
+
+// Queue initialization
+void initQueue(Queue* queue, int size) {
+    queue->items = (int*)malloc(size * sizeof(int));
+    queue->front = -1;
+    queue->rear = -1;
+}
+
+// Check if queue is empty
+bool isEmpty(Queue* queue) {
+    return queue->front == -1;
+}
+
+// Enqueue an item
+void enqueue(Queue* queue, int value) {
+    if (queue->rear == -1) {
+        queue->front = 0;
+    }
+    queue->rear++;
+    queue->items[queue->rear] = value;
+}
+
+// Dequeue an item
+int dequeue(Queue* queue) {
+    int item = queue->items[queue->front];
+    queue->front++;
+    if (queue->front > queue->rear) {
+        queue->front = queue->rear = -1; // Reset queue
+    }
+    return item;
+}
+
+// Connect maze cells based on the layout in the maze array
+void connectMaze(Graph* graph) {
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            if (maze[i][j] == 1 || maze[i][j] == 8 || maze[i][j] == 9) {
+                int currentVertex = getVertex(i, j);
+
+                // Connect with right cell
+                if (j + 1 < cols && (maze[i][j + 1] == 1 || maze[i][j + 1] == 8 || maze[i][j + 1] == 9))
+                    addEdge(graph, currentVertex, getVertex(i, j + 1));
+
+                // Connect with down cell
+                if (i + 1 < rows && (maze[i + 1][j] == 1 || maze[i + 1][j] == 8 || maze[i + 1][j] == 9))
+                    addEdge(graph, currentVertex, getVertex(i + 1, j));
+            }
+        }
+    }
+}
+
+// Convert (row, col) to vertex index
+int getVertex(int row, int column) {
+    return row * cols + column;
+}
+
+// BFS to solve the maze
+void bfsSolveMaze(Graph* graph, int startVertex, int endVertex) {
+    bool visited[rows * cols];
+    int parent[rows * cols];
+    for (int i = 0; i < rows * cols; i++) {
+        visited[i] = false;
+        parent[i] = -1;
+    }
+
+    Queue queue;
+    initQueue(&queue, rows * cols);
+
+    visited[startVertex] = true;
+    enqueue(&queue, startVertex);
+
+    while (!isEmpty(&queue)) {
+        int current = dequeue(&queue);
+
+        if (current == endVertex) {
+            printf("Path from start to exit:\n");
+            printPath(parent, startVertex, endVertex);
+            printf("\n");
+            return;
+        }
+
+        Node* temp = graph->adjLists[current];
+        while (temp) {
+            int adjVertex = temp->vertex;
+
+            if (!visited[adjVertex]) {
+                visited[adjVertex] = true;
+                parent[adjVertex] = current;
+                enqueue(&queue, adjVertex);
+            }
+            temp = temp->next;
+        }
+    }
+    printf("No path to the exit found...\n");
+}
+
+// Helper function to print path from start to end
+void printPath(int parent[], int start, int end) {
+    if (end == start) {
+        printf("(%d, %d) ", start / cols, start % cols);
+        return;
+    }
+    printPath(parent, start, parent[end]);
+    printf("-> (%d, %d) ", end / cols, end % cols);
+}
+
+// Function to display the maze with walls and paths
+// open path    -> .
+// walls        -> +, |, -
+void displayMaze(int rows, int columns, int startRow, int startCol, int exitRow, int exitCol) {
+    // Traversing the maze
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            // Storing the total number of connections, horizontal and vertical that a wall has to its adjacent cells
+            int connections = 0;
+            int horizontal = 0;
+            int vertical = 0;
+            if (i == startRow && j == startCol)
+            {
+                printf("S");  // Start position
+            }
+            else if (i == exitRow && j == exitCol)
+            {
+                printf("E");  // Exit position
+            }
+            else if (maze[i][j] == 0)   // If the currrent cell is a wall
+            {
+                if (i != 0) // If the current cell is not in the first row
+                {
+                    connections += !maze[i - 1][j];
+                    vertical += !maze[i - 1][j];
+                }
+                if (j != 0) // If the current cell is not in the first column
+                {
+                    connections += !maze[i][j - 1];
+                    horizontal += !maze[i][j - 1];
+                }
+                if (i != rows - 1)  // If the current cell is not in the last row
+                {
+                    connections += !maze[i + 1][j];
+                    vertical += !maze[i + 1][j];
+                }
+                if (j != columns - 1)   // If the current cell is not in the last column
+                {
+                    connections += !maze[i][j + 1];
+                    horizontal += !maze[i][j + 1];
+                }
+
+                if (connections == 4 || connections == 3)
+                {
+                    printf("+");
+                }
+                else if (connections == 2)
+                {
+                    if (vertical == horizontal)
+                    {
+                        printf("+");
+                    }
+                    else if (vertical)
+                    {
+                        printf("|");
+                    }
+                    else
+                    {
+                        printf("-");
+                    }
+                    
+                    
+                }
+                else if (connections == 1)
+                {
+                    if (vertical)
+                    {
+                        printf("|");
+                    }
+                    else if (horizontal)
+                    {
+                        printf("-");
+                    }
+                    
+                }
+                else
+                {
+                    printf("+");
+                }
+            }
+            else
+            {
+                printf(".");  // Open path
+            }
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+// Function to validate maze rows
+bool isValidMazeRow(char* rowInput, int row, int columns) {
+    if (row == 0) {
+        // First row must contain at least one '8'
+        return (strchr(rowInput, '8') != NULL && strlen(rowInput) == columns);
+    } else if (row == rows - 1) {
+        // Last row must end with '9'
+        return (rowInput[columns - 1] == '9' && strlen(rowInput) == columns);
+    } else {
+        // Intermediate rows can only contain '0' and '1'
+        for (int j = 0; j < columns; j++) {
+            if (rowInput[j] != '0' && rowInput[j] != '1') {
+                return false;
+            }
+        }
+        return strlen(rowInput) == columns; // Check length
+    }
+}
+
 int main() {
+    // Taking number of rows as input to form a maze
     do {
         printf("Enter the number of rows (1-10): ");
         scanf("%d", &rows);
@@ -50,6 +296,7 @@ int main() {
         }
     } while (rows <= 0 || rows > 10);
 
+    // Taking number of columns as input to form a maze
     do {
         printf("Enter the number of columns (1-10): ");
         scanf("%d", &cols);
@@ -99,11 +346,6 @@ int main() {
         } while (!validInput || (i == 0 && !startFound));
     }
 
-    // Check if the starting point '8' was found
-    if (!startFound) {
-        printf("Error: Starting point '8' is required in the first row.\n");
-        return 1; // Exit the program with an error code
-    }
 
     int vertices = rows * cols;
     Graph* graph = createGraph(vertices);
@@ -132,7 +374,7 @@ int main() {
 
     // Display the maze
     printf("Maze Layout:\n");
-    displayMaze();
+    displayMaze(rows, cols, startRow, startCol, exitRow, exitCol);
 
     // Using BFS to find the shortest path in the graph
     printf("Solving the maze:\n");
@@ -145,177 +387,4 @@ int main() {
     free(maze);
 
     return 0;
-}
-
-// Function to create a graph with given vertices
-Graph* createGraph(int vertices) {
-    Graph* graph = (Graph*)malloc(sizeof(Graph));
-    graph->numVertices = vertices;
-    graph->adjLists = (Node**)malloc(vertices * sizeof(Node*));
-
-    for (int i = 0; i < vertices; i++)
-        graph->adjLists[i] = NULL;
-
-    return graph;
-}
-
-// Function to add an edge to the graph (undirected)
-void addEdge(Graph* graph, int src, int dest) {
-    Node* newNode = createNode(dest);
-    newNode->next = graph->adjLists[src];
-    graph->adjLists[src] = newNode;
-
-    newNode = createNode(src);
-    newNode->next = graph->adjLists[dest];
-    graph->adjLists[dest] = newNode;
-}
-
-// Create a node
-Node* createNode(int vertex) {
-    Node* newNode = (Node*)malloc(sizeof(Node));
-    newNode->vertex = vertex;
-    newNode->next = NULL;
-    return newNode;
-}
-
-// Connect maze cells based on the layout in the maze array
-void connectMaze(Graph* graph) {
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            if (maze[i][j] == 1 || maze[i][j] == 8 || maze[i][j] == 9) {
-                int currentVertex = getVertex(i, j);
-
-                // Connect with right cell
-                if (j + 1 < cols && (maze[i][j + 1] == 1 || maze[i][j + 1] == 8 || maze[i][j + 1] == 9))
-                    addEdge(graph, currentVertex, getVertex(i, j + 1));
-
-                // Connect with down cell
-                if (i + 1 < rows && (maze[i + 1][j] == 1 || maze[i + 1][j] == 8 || maze[i + 1][j] == 9))
-                    addEdge(graph, currentVertex, getVertex(i + 1, j));
-            }
-        }
-    }
-}
-
-// Convert (row, col) to vertex index
-int getVertex(int row, int col) {
-    return row * cols + col;
-}
-
-// BFS to solve the maze
-void bfsSolveMaze(Graph* graph, int startVertex, int endVertex) {
-    bool visited[rows * cols];
-    int parent[rows * cols];
-    for (int i = 0; i < rows * cols; i++) {
-        visited[i] = false;
-        parent[i] = -1;
-    }
-
-    Queue q;
-    initQueue(&q, rows * cols);
-
-    visited[startVertex] = true;
-    enqueue(&q, startVertex);
-
-    while (!isEmpty(&q)) {
-        int current = dequeue(&q);
-
-        if (current == endVertex) {
-            printf("Path from start to exit:\n");
-            printPath(parent, startVertex, endVertex);
-            printf("\n");
-            return;
-        }
-
-        Node* temp = graph->adjLists[current];
-        while (temp) {
-            int adjVertex = temp->vertex;
-
-            if (!visited[adjVertex]) {
-                visited[adjVertex] = true;
-                parent[adjVertex] = current;
-                enqueue(&q, adjVertex);
-            }
-            temp = temp->next;
-        }
-    }
-    printf("No path to the exit found.\n");
-}
-
-// Helper function to print path from start to end
-void printPath(int parent[], int start, int end) {
-    if (end == start) {
-        printf("(%d, %d) ", start / cols, start % cols);
-        return;
-    }
-    printPath(parent, start, parent[end]);
-    printf("-> (%d, %d) ", end / cols, end % cols);
-}
-
-// Function to display the maze with walls and paths
-void displayMaze() {
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            if (maze[i][j] == 0) {
-                printf("| "); // Wall
-            } else if (maze[i][j] == 1) {
-                printf(". "); // Path
-            } else if (maze[i][j] == 8) {
-                printf("S "); // Start
-            } else if (maze[i][j] == 9) {
-                printf("E "); // Exit
-            }
-        }
-        printf("\n");
-    }
-}
-
-// Queue initialization
-void initQueue(Queue* q, int size) {
-    q->items = (int*)malloc(size * sizeof(int));
-    q->front = -1;
-    q->rear = -1;
-}
-
-// Check if queue is empty
-bool isEmpty(Queue* q) {
-    return q->front == -1;
-}
-
-// Enqueue an item
-void enqueue(Queue* q, int value) {
-    if (q->rear == -1) {
-        q->front = 0;
-    }
-    q->rear++;
-    q->items[q->rear] = value;
-}
-
-// Dequeue an item
-int dequeue(Queue* q) {
-    int item = q->items[q->front];
-    q->front++;
-    if (q->front > q->rear) {
-        q->front = q->rear = -1; // Reset queue
-    }
-    return item;
-}
-
-// Function to validate maze rows
-bool isValidMazeRow(char* rowInput, int row, int cols) {
-    if (row == 0) {
-        // First row must contain at least one '8'
-        return (strchr(rowInput, '8') != NULL && strlen(rowInput) == cols);
-    } else if (row == rows - 1) {
-        // Last row must end with '9'
-        return (rowInput[cols - 1] == '9' && strlen(rowInput) == cols);
-    } else {
-        // Intermediate rows can only contain '0' and '1'
-        for (int j = 0; j < cols; j++) {
-            if (rowInput[j] != '0' && rowInput[j] != '1') {
-                return false;
-            }
-        }
-        return strlen(rowInput) == cols; // Check length
-    }
 }
