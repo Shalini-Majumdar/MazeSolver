@@ -28,18 +28,18 @@ int rows, cols;
 
 // Function prototypes
 Graph* createGraph(int vertices);
-void addEdge(Graph* graph, int src, int dest);
+void addEdge(Graph* graph, int source, int destination);
 void bfsSolveMaze(Graph* graph, int startVertex, int endVertex);
-void displayMaze();
+void displayMaze(int rows, int columns, int startRow, int startCol, int exitRow, int exitCol);
 Node* createNode(int vertex);
 void connectMaze(Graph* graph);
-int getVertex(int row, int col);
+int getVertex(int row, int columns);
 void printPath(int parent[], int start, int end);
-void initQueue(Queue* q, int size);
-bool isEmpty(Queue* q);
-void enqueue(Queue* q, int value);
-int dequeue(Queue* q);
-bool isValidMazeRow(char* rowInput, int row, int cols);
+void initQueue(Queue* queue, int size);
+bool isEmpty(Queue* queue);
+void enqueue(Queue* queue, int value);
+int dequeue(Queue* queue);
+bool isValidMazeRow(char* rowInput, int row, int columns);
 
 // Function to create a graph with given vertices
 Graph* createGraph(int vertices) {
@@ -122,7 +122,7 @@ void connectMaze(Graph* graph) {
     }
 }
 
-// Convert (row, col) to vertex index
+// Convert (row, column) to vertex index
 int getVertex(int row, int column) {
     return row * cols + column;
 }
@@ -146,7 +146,7 @@ void bfsSolveMaze(Graph* graph, int startVertex, int endVertex) {
         int current = dequeue(&queue);
 
         if (current == endVertex) {
-            printf("Path from start to exit:\n");
+            printf("Shortest path from start to exit:\n");
             printPath(parent, startVertex, endVertex);
             printf("\n");
             return;
@@ -167,7 +167,7 @@ void bfsSolveMaze(Graph* graph, int startVertex, int endVertex) {
     printf("No path to the exit found...\n");
 }
 
-// Helper function to print path from start to end
+// Function to print path from start to end
 void printPath(int parent[], int start, int end) {
     if (end == start) {
         printf("(%d, %d) ", start / cols, start % cols);
@@ -179,7 +179,7 @@ void printPath(int parent[], int start, int end) {
 
 // Function to display the maze with walls and paths
 // open path    -> .
-// walls        -> +, |, -
+// walls        -> #
 void displayMaze(int rows, int columns, int startRow, int startCol, int exitRow, int exitCol) {
     // Traversing the maze
     for (int i = 0; i < rows; i++) {
@@ -190,76 +190,19 @@ void displayMaze(int rows, int columns, int startRow, int startCol, int exitRow,
             int vertical = 0;
             if (i == startRow && j == startCol)
             {
-                printf("S");  // Start position
+                printf("S  ");  // Start position
             }
             else if (i == exitRow && j == exitCol)
             {
-                printf("E");  // Exit position
+                printf("E  ");  // Exit position
             }
             else if (maze[i][j] == 0)   // If the currrent cell is a wall
             {
-                if (i != 0) // If the current cell is not in the first row
-                {
-                    connections += !maze[i - 1][j];
-                    vertical += !maze[i - 1][j];
-                }
-                if (j != 0) // If the current cell is not in the first column
-                {
-                    connections += !maze[i][j - 1];
-                    horizontal += !maze[i][j - 1];
-                }
-                if (i != rows - 1)  // If the current cell is not in the last row
-                {
-                    connections += !maze[i + 1][j];
-                    vertical += !maze[i + 1][j];
-                }
-                if (j != columns - 1)   // If the current cell is not in the last column
-                {
-                    connections += !maze[i][j + 1];
-                    horizontal += !maze[i][j + 1];
-                }
-
-                if (connections == 4 || connections == 3)
-                {
-                    printf("+");
-                }
-                else if (connections == 2)
-                {
-                    if (vertical == horizontal)
-                    {
-                        printf("+");
-                    }
-                    else if (vertical)
-                    {
-                        printf("|");
-                    }
-                    else
-                    {
-                        printf("-");
-                    }
-                    
-                    
-                }
-                else if (connections == 1)
-                {
-                    if (vertical)
-                    {
-                        printf("|");
-                    }
-                    else if (horizontal)
-                    {
-                        printf("-");
-                    }
-                    
-                }
-                else
-                {
-                    printf("+");
-                }
+                printf("#  ");
             }
             else
             {
-                printf(".");  // Open path
+                printf(".  ");  // Open path
             }
         }
         printf("\n");
@@ -289,21 +232,21 @@ bool isValidMazeRow(char* rowInput, int row, int columns) {
 int main() {
     // Taking number of rows as input to form a maze
     do {
-        printf("Enter the number of rows (1-10): ");
+        printf("Enter the number of rows (2-10): ");
         scanf("%d", &rows);
-        if (rows <= 0 || rows > 10) {
-            printf("Invalid input! Please enter a value between 1 and 10.\n");
+        if (rows <= 1 || rows > 10) {
+            printf("Invalid input! Please enter a value between 2 and 10.\n");
         }
-    } while (rows <= 0 || rows > 10);
+    } while (rows <= 1 || rows > 10);
 
     // Taking number of columns as input to form a maze
     do {
-        printf("Enter the number of columns (1-10): ");
+        printf("Enter the number of columns (2-10): ");
         scanf("%d", &cols);
-        if (cols <= 0 || cols > 10) {
-            printf("Invalid input! Please enter a value between 1 and 10.\n");
+        if (cols <= 1 || cols > 10) {
+            printf("Invalid input! Please enter a value between 2 and 10.\n");
         }
-    } while (cols <= 0 || cols > 10);
+    } while (cols <= 1 || cols > 10);
 
     // Forming the maze
     maze = (int**)malloc(rows * sizeof(int*));
@@ -311,7 +254,7 @@ int main() {
         maze[i] = (int*)malloc(cols * sizeof(int));
     }
 
-    // Updated input section for the maze
+    // Input for the maze
     bool startFound = false;
     for (int i = 0; i < rows; i++) {
         char rowInput[cols + 1];
@@ -373,7 +316,7 @@ int main() {
     int endVertex = getVertex(exitRow, exitCol);
 
     // Display the maze
-    printf("Maze Layout:\n");
+    printf("\nMaze Layout:-\n. -> path\n# -> wall\nS -> start\nE -> exit\n\n");
     displayMaze(rows, cols, startRow, startCol, exitRow, exitCol);
 
     // Using BFS to find the shortest path in the graph
