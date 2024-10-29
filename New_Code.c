@@ -42,9 +42,9 @@ bool isValidMazeRow(char* rowInput, int row, int cols);
 
 // Function to create a graph with given vertices
 Graph* createGraph(int vertices) {
-    Graph* graphPtr = (Graph*)malloc(sizeof(Graph));
+    Graph* graphPtr = (Graph*) malloc(sizeof(Graph));
     graphPtr->vertices = vertices;
-    graphPtr->adjList = (Node**)malloc(vertices * sizeof(Node*));
+    graphPtr->adjList = (Node**) malloc(vertices * sizeof(Node*));
     for (int i = 0; i < vertices; i++) graphPtr->adjList[i] = NULL;
     return graphPtr;
 }
@@ -62,7 +62,7 @@ void addEdge(Graph* graphPtr, int src, int dest) {
 
 // Create a node
 Node* newNode(int v) {
-    Node* adjListNode = (Node*)malloc(sizeof(Node));
+    Node* adjListNode = (Node*) malloc(sizeof(Node));
     adjListNode->v = v;
     adjListNode->next = NULL;
     return adjListNode;
@@ -70,7 +70,7 @@ Node* newNode(int v) {
 
 // Queue initialization
 void initQueue(Queue* queue, int size) {
-    queue->data = (int*)malloc(size * sizeof(int));
+    queue->data = (int*) malloc(size * sizeof(int));
     queue->front = queue->rear = -1;
 }
 
@@ -81,14 +81,16 @@ bool isEmpty(Queue* queue) {
 
 // Enqueue an item
 void enqueue(Queue* queue, int val) {
-    if (queue->rear == -1) queue->front = 0;
+    if (queue->rear == -1)
+        queue->front = 0;
     queue->data[++queue->rear] = val;
 }
 
 // Dequeue an item
 int dequeue(Queue* queue) {
     int val = queue->data[queue->front++];
-    if (queue->front > queue->rear) queue->front = queue->rear = -1;
+    if (queue->front > queue->rear)
+        queue->front = queue->rear = -1;
     return val;
 }
 
@@ -195,9 +197,7 @@ bool isValidMazeRow(char* rowInput, int row, int cols) {
     for (int j = 0; j < cols; j++)
     {
         if (rowInput[j] != '0' && rowInput[j] != '1')
-        {
             return false;
-        }
     }
     return strlen(rowInput) == cols;
 }
@@ -224,9 +224,7 @@ int main() {
     // Forming the maze
     maze = (int**) malloc(rows * sizeof(int*));
     for (int i = 0; i < rows; i++)
-    {
         maze[i] = (int*) malloc(cols * sizeof(int));
-    }
 
     // Input for the maze
     bool startSet = false;
@@ -238,9 +236,9 @@ int main() {
             scanf("%s", rowInput);
             validInput = isValidMazeRow(rowInput, i, cols);
 
-            if (!validInput) {
+            if (!validInput)
                 printf("Invalid input, try again...\n");
-            } else {
+            else {
                 for (int j = 0; j < cols; j++) {
                     maze[i][j] = rowInput[j] - '0';
                 }
@@ -265,9 +263,7 @@ int main() {
 
     // Freeing allocated memory
     for (int i = 0; i < rows; i++)
-    {
         free(maze[i]);
-    }
     free(maze);
 
     return 0;
